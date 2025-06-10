@@ -12,7 +12,7 @@ help:
 run:
 	@gcc -c -std=c99 -o main.o main.c
 	@as -o driver.o driver.s
-	@gcc main.o driver.o -o main
+	@gcc main.o driver.o -o main -lm
 	@sudo ./main
 
 clean:
@@ -27,4 +27,4 @@ clean:
 compile:
 	@gcc -c -std=c99 -o main.o main.c
 	@as -o driver.o driver.s
-	@gcc main.o driver.o -o main
+	@gcc main.o driver.o -o main -lm

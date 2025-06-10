@@ -19,6 +19,8 @@ void apply_sobel_5x5(unsigned char* gray_img, unsigned char* output, int width, 
 unsigned char* convert_to_grayscale(const char* input_path, int* width, int* height);
 
 
+// void driver(int8_t* kernel, int8_t* region, uint8_t* result, int size, int opcode);
+
 extern void mmap_setup();
 extern void driver(int8_t *matrixA, int8_t *matrixB, uint8_t *matrixR, int size, int op_opcode);
 extern void mmap_cleanup();
@@ -130,6 +132,66 @@ void show_menu() {
     printf("5 - Aplicar Filtro Sobel (5x5)\n");
     printf("6 - Voltar ao menu principal\n");
 }
+
+// void driver(int8_t* kernel, int8_t* region, uint8_t* result, int size, int opcode) {
+//     if (size == 0) {
+//         int sum = 0;
+//         for (int i = 0; i < 2; i++) {
+//             for (int e = 0; e < 2; e++) {
+//                 sum += kernel[i * 2 + e] * region[i * 2 + e];
+//             }
+//         }
+
+//         result[0] = (sum >> 8) & 0xFF;
+//         result[1] = sum & 0xFF;
+//     }
+
+//     if (size == 1) {
+//         int sum = 0;
+//         for (int i = 0; i < 3; i++) {
+//             for (int e = 0; e < 3; e++) {
+//                 sum += kernel[i * 3 + e] * region[i * 3 + e];
+//             }
+//         }
+
+//         result[0] = (sum >> 8) & 0xFF;
+//         result[1] = sum & 0xFF;
+//     }
+
+//     // laplaciano - opcode
+//     if (size == 3 && opcode == 2) {
+//         int sum = 0;
+//         for (int i = 0; i < 5; i++) {
+//             for (int e = 0; e < 5; e++) {
+//                 sum += kernel[i * 5 + e] * region[i * 5 + e];
+//             }
+//         }
+
+//         if (sum >= 127) {
+//             result[0] = 127;
+//         }
+//         else if (sum <= 0) {
+//             result[0] = 0;
+//         }
+//         else {
+//             result[0] = sum;
+//         }
+
+//     }
+
+//     // sobel 5x5
+//     if (size == 3 && opcode == 1) {
+//         int sum = 0;
+//         for (int i = 0; i < 5; i++) {
+//             for (int e = 0; e < 5; e++) {
+//                 sum += kernel[i * 5 + e] * region[i * 5 + e];
+//             }
+//         }
+
+//         result[0] = (sum >> 8) & 0xFF;
+//         result[1] = sum & 0xFF;
+//     }
+// }
 
 void apply_filter(unsigned char* gray_img, int width, int height, const char* output_path, int filter_type) {
     unsigned char* output = (unsigned char*)malloc(width * height * sizeof(unsigned char));
@@ -250,6 +312,12 @@ void apply_prewitt(unsigned char* gray_img, unsigned char* output, int width, in
             driver(prewitt_x_kernel, region_s8, gx_result, 1, 2);
             driver(prewitt_y_kernel, region_s8, gy_result, 1, 2);
 
+            // Calcula a magnitude do gradiente (aproximação)
+            //int16_t gx = gx_result[0] * 16;
+            //int16_t gy = gy_result[0] * 16;
+
+            //int16_t magnitude = sqrt(pow(gx, 2) + pow(gy, 2));
+
             // O byte na posição 0 será os bits MSB
             int16_t gx_final = ((int16_t)((gx_result[1] << 8) | gx_result[0]) )* divisor;
             int16_t gy_final = ((int16_t)((gy_result[1] << 8) | gy_result[0]) )* divisor;
@@ -303,6 +371,10 @@ void apply_roberts(unsigned char* gray_img, unsigned char* output, int width, in
             // Aplica convolução nas direções X e Y
             driver(roberts_x_kernel, region_s8, gx_result, 0, 2);
             driver(roberts_y_kernel, region_s8, gy_result, 0, 2);
+
+            // Calcula a magnitude do gradiente (aproximação)
+            // int16_t gx = gx_result[0] * 2;
+            // int16_t gy = gy_result[0] * 2;
 
             // O byte na posição 0 será os bits MSB
             uint8_t gx_final = (int16_t)((gx_result[1] << 8) | gx_result[0]) * divisor;
@@ -362,6 +434,11 @@ void apply_sobel_3x3(unsigned char* gray_img, unsigned char* output, int width, 
             // Aplica convolução nas direções X e Y
             driver(sobel_x_kernel, region_s8, gx_result, 1, 2);
             driver(sobel_y_kernel, region_s8, gy_result, 1, 2);
+
+            // Calcula a magnitude do gradiente (aproximação)
+            // int16_t gx = gx_result[0] * 4;
+            // int16_t gy = gy_result[0] * 4;
+            // int16_t magnitude = sqrt(pow(gx, 2) + pow(gy, 2));
 
             // O byte na posição 0 será os bits MSB
             uint8_t gx_final = (int16_t)((gx_result[1] << 8) | gx_result[0]) * divisor;
@@ -430,6 +507,12 @@ void apply_sobel_5x5(unsigned char* gray_img, unsigned char* output, int width, 
             uint8_t gx = gx_result[0] * divisor;
             uint8_t gy = gy_result[0] * divisor;
             int16_t magnitude = sqrt(pow(gx, 2) + pow(gy, 2));
+
+            // O byte na posição 0 será os bits MSB
+            // int16_t gx_final = (int16_t)((gx_result[1] << 8) | gx_result[0]) * divisor;
+            // int16_t gy_final = (int16_t)((gy_result[1] << 8) | gy_result[0]) * divisor;
+
+            // int16_t magnitude = sqrt(pow(gx_final, 2) + pow(gy_final, 2));
 
             magnitude = magnitude >> 3;
 
